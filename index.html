@@ -106,6 +106,17 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
 .chip.good{background:rgba(94,224,138,.15);color:var(--good)}
 .chip.warn{background:rgba(255,181,71,.15);color:var(--warn)}
 
+/* Velocity: activities completed per weekday */
+.velo{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px}
+.velo .vl{font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.velo .vv{font-family:var(--label);font-weight:700;font-size:25px;line-height:1.1;font-variant-numeric:tabular-nums}
+.velo .vv span{font-size:14px;font-weight:500;color:var(--muted)}
+.velo .vt{font-size:13px;color:var(--muted)}
+.velo svg{width:100%;height:auto;display:block;max-height:84px}
+.velo svg text{font-family:var(--label);font-size:10px;fill:var(--muted)}
+.velo svg text.n{fill:var(--paint);font-weight:700}
+.velo svg text.now{fill:var(--paint);font-weight:700}
+
 /* Position tracker: change since the last refresh */
 .posrow{display:flex;align-items:center;gap:6px}
 .mv{display:inline-flex;align-items:center;gap:3px;font-family:var(--label);font-weight:700;font-size:13px;line-height:1;padding:3px 7px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -171,10 +182,11 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
     <ul class="legend">
       <li><b>Laps to go</b> Activities scheduled from today through each kid's last school day that aren't marked Completed, including anything left from today.</li>
       <li><b>Needed per day</b> Laps to go divided by school days left after today.</li>
+      <li><b>Velocity</b> Activities completed this week (starting Monday) divided by the weekdays so far, today included. Bars show each weekday's count and reset every Monday.</li>
       <li><b>Pit stop</b> Activities scheduled before today that haven't been started.</li>
       <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
     </ul>
-    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 5:18 PM CT</span>. Standings update every hour on school days.</div>
+    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 5:35 PM CT</span>. Standings update every hour on school days.</div>
   </footer>
 </main>
 
@@ -186,19 +198,20 @@ const KIDS = [
   {name:"Marcus",  grade:"2nd grade", num:2, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
   {name:"Adaline", grade:"3rd grade", num:3, c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff"}}
 ];
-const FALLBACK = `snapshot|Tue, Nov 10, 2026, 5:18 PM CT
-prevsnapshot|Tue, Nov 10, 2026, 3:55 PM CT
-Emmett|1564|1690|125|10|Thu, Dec 3|0||1553|1690
-Maxwell|800|1023|196|18|Thu, Dec 10|2|His plan runs through Thanksgiving week|799|1023
-Marcus|816|983|161|14|Thu, Dec 10|4||816|983
-Adaline|994|1231|230|14|Thu, Dec 10|5||994|1231`;
+const FALLBACK = `snapshot|Tue, Nov 10, 2026, 5:35 PM CT
+prevsnapshot|Tue, Nov 10, 2026, 5:30 PM CT
+Emmett|1564|1690|125|10|Thu, Dec 3|0||1564|1690|11,20
+Maxwell|800|1023|196|14|Thu, Dec 10|2||800|1023|9,5
+Marcus|816|983|161|14|Thu, Dec 10|4||816|983|10,25
+Adaline|994|1231|230|14|Thu, Dec 10|5||994|1231|17,28`;
 
 const fmt = n => n.toLocaleString("en-US");
 const pct1 = p => (Math.round(p * 1000) / 10).toFixed(1);
 
 // standings.txt format, one line per kid, fields split by "|":
-// name|done|total|laps to go|school days left|finish line|pit stops|note|prev done|prev total
-// plus: snapshot|<when the numbers were pulled>   prevsnapshot|<when the previous refresh was>
+// name|done|total|laps to go|school days left|finish line|pit stops|note|prev done|prev total|this week
+// ("this week" = comma-separated counts completed each weekday from Monday through today, e.g. 27,28)
+// plus: snapshot|<when>   prevsnapshot|<previous refresh>
 function parse(text){
   const out = {snapshot:"", prevSnapshot:"", kids:{}};
   for (const raw of text.split(/\r?\n/)) {
@@ -208,12 +221,13 @@ function parse(text){
     const key = f[0].toLowerCase();
     if (key === "snapshot") { out.snapshot = f.slice(1).join("|"); continue; }
     if (key === "prevsnapshot") { out.prevSnapshot = f.slice(1).join("|"); continue; }
-    const [name, done, total, toGo, days, last, overdue, note, prevDone, prevTotal] = f;
+    const [name, done, total, toGo, days, last, overdue, note, prevDone, prevTotal, hist] = f;
     const n = [done, total, toGo, days, overdue].map(Number);
     if (n.some(x => !Number.isFinite(x)) || !n[1]) continue;
     const pd = Number(prevDone), pt = Number(prevTotal);
     out.kids[name] = {done:n[0], total:n[1], toGo:n[2], days:n[3], last:last || "", overdue:n[4], note:note || "",
-                      prevDone: prevDone && Number.isFinite(pd) ? pd : null, prevTotal: pt > 0 ? pt : null};
+                      prevDone: prevDone && Number.isFinite(pd) ? pd : null, prevTotal: pt > 0 ? pt : null,
+                      week: hist ? hist.split(",").map(Number).filter(Number.isFinite).slice(0, 5) : []};
   }
   return out;
 }
@@ -254,6 +268,9 @@ function render(data){
             long: d > 0 ? `▲ Up ${d}` : d < 0 ? `▼ Down ${-d}` : "– Held",
             label: d > 0 ? `Up ${d} since last refresh` : d < 0 ? `Down ${-d} since last refresh` : "Same place as last refresh"};
   };
+  // Velocity = activities completed this week (since Monday) per weekday so far, today included
+  const vel = k => k.week.length ? k.week.reduce((a, b) => a + b, 0) / k.week.length : null;
+  const hasVel = kids.every(k => vel(k) != null);
   const done = kids.reduce((s, k) => s + k.done, 0);
   const total = kids.reduce((s, k) => s + k.total, 0);
   const toGo = kids.reduce((s, k) => s + k.toGo, 0);
@@ -261,6 +278,7 @@ function render(data){
     `<span>Team: <b>${fmt(done)}</b> of <b>${fmt(total)}</b> activities done (<b>${pct1(done / total)}%</b>)</span>` +
     `<span><b>${fmt(toGo)}</b> to go from today</span>` +
     (hasPrev ? `<span><b>+${fmt(done - kids.reduce((s, k) => s + k.prevDone, 0))}</b> since ${prevTime}</span>` : "") +
+    (hasVel ? `<span>Team velocity <b>${kids.reduce((s, k) => s + vel(k), 0).toFixed(1)}</b> a weekday this week</span>` : "") +
     `<span>Checkered flag: <b>Thu, Dec 10</b></span>`;
   if (data.snapshot) document.getElementById("snap").textContent = "Snapshot taken " + data.snapshot;
 
@@ -282,6 +300,24 @@ function render(data){
       : `<span class="chip warn">Pit stop: ${k.overdue} to catch up</span>`;
     const notes = [`Finish line ${k.last}`].concat(k.note ? [k.note] : []).join(" · ");
     const m = move(k, i);
+    const v = vel(k);
+    const velo = v == null ? "" : (() => {
+      const wk = k.week, max = Math.max(1, ...wk), W = 160, bw = 24, gap = (W - 5 * bw) / 4, names = ["Mon","Tue","Wed","Thu","Fri"];
+      const bars = names.map((nm, j) => {
+        const x = (j * (bw + gap)).toFixed(1), has = j < wk.length, c = has ? wk[j] : 0, today = j === wk.length - 1;
+        const bh = has ? Math.max(c ? 2 : 0, Math.round(30 * c / max)) : 0, y = 32 - bh;
+        return `<g><title>${nm}${has ? `: ${c} done` : " (not yet)"}</title>` +
+          (has ? `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${k.c.body}"${k.dark ? ' stroke="rgba(243,241,234,.6)" stroke-width="1"' : ""}/>` : "") +
+          (has && c ? `<text x="${(+x + bw / 2).toFixed(1)}" y="${y - 2}" text-anchor="middle" class="n">${c}</text>` : "") +
+          `<rect x="${x}" y="32" width="${bw}" height="1" fill="rgba(243,241,234,${has ? .35 : .15})"/>` +
+          `<text x="${(+x + bw / 2).toFixed(1)}" y="43" text-anchor="middle"${today ? ' class="now"' : ""}>${nm[0]}</text></g>`;
+      }).join("");
+      const sum = wk.reduce((a, b) => a + b, 0);
+      return `<div class="velo">
+        <div><div class="vl">Velocity</div><div class="vv">${v.toFixed(1)} <span>a weekday</span></div><div class="vt">${fmt(sum)} done this week</div></div>
+        <svg viewBox="0 -10 ${W} 55" role="img" aria-label="Activities completed each weekday this week">${bars}</svg>
+      </div>`;
+    })();
     const since = m ? `<div class="since"><span class="mv ${m.cls}" aria-label="${m.label}">${m.long}</span>
         <span>Last refresh (${prevTime}): <b>P${prevPos[k.name]}</b> at <b>${pct1(k.prevDone / k.prevTotal)}%</b> · <b>+${fmt(k.done - k.prevDone)}</b> done since</span></div>` : "";
     return `
@@ -298,6 +334,7 @@ function render(data){
         <div><dt>School days left</dt><dd>${k.days}</dd></div>
         <div><dt>Needed per day</dt><dd>${perDay}</dd></div>
       </dl>
+      ${velo}
       <div class="foot">${chip}<span>${notes}</span></div>
       ${since}
     </article>`;
