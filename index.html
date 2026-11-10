@@ -19,6 +19,7 @@
   --good:#5ee08a;
   --warn:#ffb547;
   --kerb:#e23b3b;
+  --down:#ff7a7a;
   --grid:rgba(243,241,234,.13);
   --display:"Racing Sans One","Arial Black",Impact,sans-serif;
   --body:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -105,8 +106,21 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
 .chip.good{background:rgba(94,224,138,.15);color:var(--good)}
 .chip.warn{background:rgba(255,181,71,.15);color:var(--warn)}
 
+/* Position tracker: change since the last refresh */
+.posrow{display:flex;align-items:center;gap:6px}
+.mv{display:inline-flex;align-items:center;gap:3px;font-family:var(--label);font-weight:700;font-size:13px;line-height:1;padding:3px 7px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mv.up{color:var(--good);background:rgba(94,224,138,.15)}
+.mv.down{color:var(--down);background:rgba(255,122,122,.15)}
+.mv.same{color:var(--muted);background:rgba(243,241,234,.08)}
+.since{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px;color:var(--muted);background:rgba(0,0,0,.2);border-radius:10px;padding:8px 10px}
+.since b{color:var(--paint);font-weight:600}
+.since .mv{font-size:14px;padding:4px 9px}
+
 .source{display:grid;gap:4px;font-size:14px;color:var(--muted);border-top:1px solid rgba(243,241,234,.12);padding-top:14px}
 .source b{color:var(--paint);font-weight:600}
+.legend{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:6px}
+.legend li{display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:baseline}
+@media (max-width:600px){.legend li{grid-template-columns:1fr;gap:2px}}
 
 @media (max-width:600px){
   :root{--label-w:0px;--car-w:62px;--road-h:66px;--fin:22px}
@@ -154,8 +168,13 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
   <section class="cards" id="cards" aria-label="Driver standings"></section>
 
   <footer class="source">
-    <div><b>Laps to go</b> counts activities scheduled from today through each kid's last school day that aren't marked Completed, including anything left from today. <b>Pit stop</b> means activities scheduled before today that haven't been started. <b>Needed per day</b> is laps to go divided by school days left after today.</div>
-    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 3:55 PM CT</span>. Standings update every hour on school days.</div>
+    <ul class="legend">
+      <li><b>Laps to go</b> Activities scheduled from today through each kid's last school day that aren't marked Completed, including anything left from today.</li>
+      <li><b>Needed per day</b> Laps to go divided by school days left after today.</li>
+      <li><b>Pit stop</b> Activities scheduled before today that haven't been started.</li>
+      <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
+    </ul>
+    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 5:18 PM CT</span>. Standings update every hour on school days.</div>
   </footer>
 </main>
 
@@ -167,29 +186,34 @@ const KIDS = [
   {name:"Marcus",  grade:"2nd grade", num:2, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
   {name:"Adaline", grade:"3rd grade", num:3, c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff"}}
 ];
-const FALLBACK = `snapshot|Tue, Nov 10, 2026, 3:55 PM CT
-Emmett|1553|1690|136|10|Thu, Dec 3|0|
-Maxwell|799|1023|197|18|Thu, Dec 10|2|His plan runs through Thanksgiving week
-Marcus|816|983|161|14|Thu, Dec 10|4|
-Adaline|994|1231|230|14|Thu, Dec 10|5|`;
+const FALLBACK = `snapshot|Tue, Nov 10, 2026, 5:18 PM CT
+prevsnapshot|Tue, Nov 10, 2026, 3:55 PM CT
+Emmett|1564|1690|125|10|Thu, Dec 3|0||1553|1690
+Maxwell|800|1023|196|18|Thu, Dec 10|2|His plan runs through Thanksgiving week|799|1023
+Marcus|816|983|161|14|Thu, Dec 10|4||816|983
+Adaline|994|1231|230|14|Thu, Dec 10|5||994|1231`;
 
 const fmt = n => n.toLocaleString("en-US");
 const pct1 = p => (Math.round(p * 1000) / 10).toFixed(1);
 
 // standings.txt format, one line per kid, fields split by "|":
-// name|done|total|laps to go|school days left|finish line|pit stops|note
-// plus a line: snapshot|<when the numbers were pulled>
+// name|done|total|laps to go|school days left|finish line|pit stops|note|prev done|prev total
+// plus: snapshot|<when the numbers were pulled>   prevsnapshot|<when the previous refresh was>
 function parse(text){
-  const out = {snapshot:"", kids:{}};
+  const out = {snapshot:"", prevSnapshot:"", kids:{}};
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
     const f = line.split("|").map(x => x.trim());
-    if (f[0].toLowerCase() === "snapshot") { out.snapshot = f.slice(1).join("|"); continue; }
-    const [name, done, total, toGo, days, last, overdue, note] = f;
+    const key = f[0].toLowerCase();
+    if (key === "snapshot") { out.snapshot = f.slice(1).join("|"); continue; }
+    if (key === "prevsnapshot") { out.prevSnapshot = f.slice(1).join("|"); continue; }
+    const [name, done, total, toGo, days, last, overdue, note, prevDone, prevTotal] = f;
     const n = [done, total, toGo, days, overdue].map(Number);
     if (n.some(x => !Number.isFinite(x)) || !n[1]) continue;
-    out.kids[name] = {done:n[0], total:n[1], toGo:n[2], days:n[3], last:last || "", overdue:n[4], note:note || ""};
+    const pd = Number(prevDone), pt = Number(prevTotal);
+    out.kids[name] = {done:n[0], total:n[1], toGo:n[2], days:n[3], last:last || "", overdue:n[4], note:note || "",
+                      prevDone: prevDone && Number.isFinite(pd) ? pd : null, prevTotal: pt > 0 ? pt : null};
   }
   return out;
 }
@@ -216,18 +240,33 @@ function render(data){
   const kids = KIDS.filter(k => data.kids[k.name]).map(k => ({...k, ...data.kids[k.name]}));
   if (!kids.length) return false;
   const ranked = kids.map(k => ({...k, p:k.done / k.total, left:k.toGo})).sort((a, b) => b.p - a.p);
+  // Where each driver stood at the previous refresh
+  const hasPrev = kids.every(k => k.prevDone != null && k.prevTotal);
+  const prevPos = {};
+  if (hasPrev) kids.map(k => ({name:k.name, pp:k.prevDone / k.prevTotal}))
+                   .sort((a, b) => b.pp - a.pp).forEach((k, i) => { prevPos[k.name] = i + 1; });
+  const prevTime = (data.prevSnapshot.match(/^(\w+),.*?(\d{1,2}:\d{2}\s*[AP]M)/i) || []).slice(1).join(" ") || "last refresh";
+  const move = (k, i) => {
+    if (!hasPrev) return null;
+    const d = prevPos[k.name] - (i + 1);
+    return {d, cls: d > 0 ? "up" : d < 0 ? "down" : "same",
+            short: d > 0 ? `▲${d}` : d < 0 ? `▼${-d}` : "–",
+            long: d > 0 ? `▲ Up ${d}` : d < 0 ? `▼ Down ${-d}` : "– Held",
+            label: d > 0 ? `Up ${d} since last refresh` : d < 0 ? `Down ${-d} since last refresh` : "Same place as last refresh"};
+  };
   const done = kids.reduce((s, k) => s + k.done, 0);
   const total = kids.reduce((s, k) => s + k.total, 0);
   const toGo = kids.reduce((s, k) => s + k.toGo, 0);
   document.getElementById("summary").innerHTML =
     `<span>Team: <b>${fmt(done)}</b> of <b>${fmt(total)}</b> activities done (<b>${pct1(done / total)}%</b>)</span>` +
     `<span><b>${fmt(toGo)}</b> to go from today</span>` +
+    (hasPrev ? `<span><b>+${fmt(done - kids.reduce((s, k) => s + k.prevDone, 0))}</b> since ${prevTime}</span>` : "") +
     `<span>Checkered flag: <b>Thu, Dec 10</b></span>`;
   if (data.snapshot) document.getElementById("snap").textContent = "Snapshot taken " + data.snapshot;
 
   document.getElementById("lanes").innerHTML = ranked.map((k, i) => `
     <div class="lane" style="--p:${k.p.toFixed(4)};--kid:${k.trail || k.c.body};--trail-o:${k.trailO || .6};--delay:${(i * .15).toFixed(2)}s">
-      <div class="driver"><span class="pos">P${i + 1}</span><span class="dname">${k.name}</span></div>
+      <div class="driver"><span class="posrow"><span class="pos">P${i + 1}</span>${(m => m ? `<span class="mv ${m.cls}" title="${m.label}" aria-label="${m.label}">${m.short}</span>` : "")(move(k, i))}</span><span class="dname">${k.name}</span></div>
       <div class="road" role="img" aria-label="${k.name}: ${pct1(k.p)} percent of activities done">
         <div class="trail"></div>
         <div class="tag">${pct1(k.p)}%</div>
@@ -242,6 +281,9 @@ function render(data){
       ? `<span class="chip good">On pace</span>`
       : `<span class="chip warn">Pit stop: ${k.overdue} to catch up</span>`;
     const notes = [`Finish line ${k.last}`].concat(k.note ? [k.note] : []).join(" · ");
+    const m = move(k, i);
+    const since = m ? `<div class="since"><span class="mv ${m.cls}" aria-label="${m.label}">${m.long}</span>
+        <span>Last refresh (${prevTime}): <b>P${prevPos[k.name]}</b> at <b>${pct1(k.prevDone / k.prevTotal)}%</b> · <b>+${fmt(k.done - k.prevDone)}</b> done since</span></div>` : "";
     return `
     <article class="card${k.dark ? " dark" : ""}" style="--kid:${k.c.body}">
       <div class="card-head">
@@ -257,6 +299,7 @@ function render(data){
         <div><dt>Needed per day</dt><dd>${perDay}</dd></div>
       </dl>
       <div class="foot">${chip}<span>${notes}</span></div>
+      ${since}
     </article>`;
   }).join("");
   return true;
