@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koen Homeschool Grand Prix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Racing+Sans+One&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: one ranked race track (a lane per kid, finish line = last school day) above a grid of driver cards. Single "race night" theme. */
+  --night:#1b1d21;
+  --pit:#262930;
+  --asphalt:#3d4148;
+  --paint:#f3f1ea;
+  --muted:#a9aeb7;
+  --flag:#ffd23f;
+  --good:#5ee08a;
+  --warn:#ffb547;
+  --kerb:#e23b3b;
+  --grid:rgba(243,241,234,.13);
+  --display:"Racing Sans One","Arial Black",Impact,sans-serif;
+  --body:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --label:"Barlow Condensed","Arial Narrow","Segoe UI",sans-serif;
+  --label-w:118px;
+  --fin:28px;
+  --car-w:92px;
+  --road-h:76px;
+  color-scheme:dark;
+}
+@property --p{syntax:"<number>";inherits:true;initial-value:0}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--night);color:var(--paint);font-family:var(--body);line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:28px 20px 40px;display:grid;gap:26px}
+
+/* Header */
+header{display:grid;gap:10px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--label);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--flag)}
+.eyebrow i{width:24px;height:16px;border-radius:2px;background:repeating-conic-gradient(#111 0 25%,#fff 0 50%) 0 0/8px 8px}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(34px,6.2vw,60px);line-height:1;letter-spacing:.01em;text-wrap:balance}
+.summary{display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--label);font-size:18px;color:var(--muted)}
+.summary b{color:var(--paint);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Track */
+.track{background:var(--asphalt);border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.kerb{height:9px;background:repeating-linear-gradient(90deg,var(--kerb) 0 24px,var(--paint) 24px 48px)}
+.lanes{padding:10px 0 12px}
+.axis,.lane{display:grid;grid-template-columns:var(--label-w) 1fr}
+.scale{position:relative;height:22px;margin-right:var(--fin)}
+.scale span{position:absolute;top:0;transform:translateX(-50%);font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.scale span.start{transform:none;padding-left:8px}
+.scale span.fin{left:auto;right:calc(-1 * var(--fin));transform:none;padding-right:6px;color:var(--paint)}
+.lane + .lane{border-top:2px dashed rgba(243,241,234,.32)}
+.driver{display:grid;align-content:center;padding:0 10px 0 18px}
+.driver .pos{font-family:var(--display);font-size:22px;line-height:1;color:var(--flag)}
+.driver .dname{font-family:var(--label);font-weight:700;font-size:21px;line-height:1.15}
+.road{position:relative;height:var(--road-h);margin-right:var(--fin);border-left:4px solid var(--paint);
+  background:
+    linear-gradient(var(--grid),var(--grid)) 25% 0/1px 100% no-repeat,
+    linear-gradient(var(--grid),var(--grid)) 50% 0/1px 100% no-repeat,
+    linear-gradient(var(--grid),var(--grid)) 75% 0/1px 100% no-repeat}
+.finish{position:absolute;top:-1px;bottom:-1px;left:100%;width:var(--fin);background:repeating-conic-gradient(#111 0 25%,#fff 0 50%) 0 0/10px 10px}
+.trail{position:absolute;left:0;bottom:13px;height:5px;border-radius:3px;
+  width:max(0px,calc(var(--p) * 100% - var(--car-w) * .75));
+  background:repeating-linear-gradient(90deg,var(--kid) 0 16px,transparent 16px 26px);opacity:var(--trail-o,.6)}
+.car{position:absolute;bottom:7px;width:var(--car-w);height:auto;display:block;
+  left:max(0px,calc(var(--p) * 100% - var(--car-w)))}
+.tag{position:absolute;top:6px;transform:translateX(-50%);
+  left:max(calc(var(--car-w) / 2),calc(var(--p) * 100% - var(--car-w) / 2));
+  font-family:var(--label);font-weight:700;font-size:15px;line-height:1;padding:4px 8px;border-radius:999px;
+  background:rgba(0,0,0,.42);color:var(--paint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wheel{transform-box:fill-box;transform-origin:center}
+
+.lane{animation:drive 1.9s cubic-bezier(.2,.75,.25,1) both;animation-delay:var(--delay,0s)}
+.lane .wheel{animation:spin .32s linear 6;animation-delay:var(--delay,0s)}
+@keyframes drive{from{--p:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.lane,.lane .wheel{animation:none}}
+
+/* Driver cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.card{container-type:inline-size;background:var(--pit);border-radius:16px;padding:20px 18px 16px;display:grid;gap:14px;box-shadow:inset 0 6px 0 var(--kid)}
+.card.dark{box-shadow:inset 0 6px 0 var(--kid),inset 0 7px 0 rgba(243,241,234,.55)}
+.card-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px}
+.mini{width:88px}
+.mini svg{width:100%;height:auto;display:block}
+.who .pos{font-family:var(--display);font-size:18px;line-height:1;color:var(--flag)}
+.who h2{margin:2px 0 0;font-family:var(--display);font-weight:400;font-size:30px;line-height:1}
+.who .sub{font-family:var(--label);font-size:15px;color:var(--muted)}
+.pct{font-family:var(--display);font-size:42px;line-height:1;font-variant-numeric:tabular-nums}
+.pct small{font-size:20px;color:var(--muted)}
+.bar{height:10px;border-radius:999px;background:#474b53;overflow:hidden}
+.bar span{display:block;height:100%;border-radius:999px;background:var(--kid)}
+.card.dark .bar span{box-shadow:inset 0 0 0 1.5px rgba(243,241,234,.6)}
+.stats{margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stats > div{background:rgba(0,0,0,.2);border-radius:10px;padding:8px 10px}
+dt{font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+dd{margin:3px 0 0;font-family:var(--label);font-weight:700;font-size:25px;line-height:1.05;font-variant-numeric:tabular-nums}
+dd span{font-size:14px;font-weight:500;color:var(--muted)}
+@container (max-width:470px){.stats{grid-template-columns:repeat(2,1fr)}}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:15px;color:var(--muted)}
+.chip{font-family:var(--label);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;padding:4px 11px;border-radius:999px}
+.chip.good{background:rgba(94,224,138,.15);color:var(--good)}
+.chip.warn{background:rgba(255,181,71,.15);color:var(--warn)}
+
+.source{display:grid;gap:4px;font-size:14px;color:var(--muted);border-top:1px solid rgba(243,241,234,.12);padding-top:14px}
+.source b{color:var(--paint);font-weight:600}
+
+@media (max-width:600px){
+  :root{--label-w:0px;--car-w:62px;--road-h:66px;--fin:22px}
+  .wrap{padding:22px 16px 32px;gap:22px}
+  .axis{grid-template-columns:1fr;padding-left:0}
+  .axis > div:first-child{display:none}
+  .lane{grid-template-columns:1fr}
+  .driver{display:flex;align-items:baseline;gap:8px;padding:8px 14px 0}
+  .driver .pos{font-size:18px}
+  .driver .dname{font-size:18px}
+  .scale span.start{padding-left:6px}
+  .tag{font-size:13px;padding:3px 7px}
+  .mini{width:70px}
+  .pct{font-size:34px}
+  .who h2{font-size:26px}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="eyebrow"><i aria-hidden="true"></i>Time4Learning · 2026 school year</div>
+    <h1>Koen Homeschool Grand Prix</h1>
+    <div class="summary" id="summary"></div>
+  </header>
+
+  <section class="track" aria-label="Race track: each car's position is the share of that kid's school-year activities completed">
+    <div class="kerb" aria-hidden="true"></div>
+    <div class="lanes">
+      <div class="axis" aria-hidden="true">
+        <div></div>
+        <div class="scale">
+          <span class="start" style="left:0">Start</span>
+          <span style="left:25%">25%</span>
+          <span style="left:50%">50%</span>
+          <span style="left:75%">75%</span>
+          <span class="fin">Finish</span>
+        </div>
+      </div>
+      <div id="lanes"></div>
+    </div>
+    <div class="kerb" aria-hidden="true"></div>
+  </section>
+
+  <section class="cards" id="cards" aria-label="Driver standings"></section>
+
+  <footer class="source">
+    <div><b>Laps to go</b> counts activities scheduled from today through each kid's last school day that aren't marked Completed, including anything left from today. <b>Pit stop</b> means activities scheduled before today that haven't been started. <b>Needed per day</b> is laps to go divided by school days left after today.</div>
+    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 3:55 PM CT</span>. Standings update every hour on school days.</div>
+  </footer>
+</main>
+
+<script>
+// Car look for each driver. Standings numbers come from standings.txt (updated hourly); the values here are the fallback.
+const KIDS = [
+  {name:"Emmett",  grade:"7th grade", num:7, c:{body:"#2f7bff", wing:"#1a4fb8", line:"#0b2a66", stripe:"#ffffff"}},
+  {name:"Maxwell", grade:"5th grade", num:5, c:{body:"#23b14d", wing:"#15773a", line:"#0b3d1d", stripe:"#ffffff"}},
+  {name:"Marcus",  grade:"2nd grade", num:2, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
+  {name:"Adaline", grade:"3rd grade", num:3, c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff"}}
+];
+const FALLBACK = `snapshot|Tue, Nov 10, 2026, 3:55 PM CT
+Emmett|1553|1690|136|10|Thu, Dec 3|0|
+Maxwell|799|1023|197|18|Thu, Dec 10|2|His plan runs through Thanksgiving week
+Marcus|816|983|161|14|Thu, Dec 10|4|
+Adaline|994|1231|230|14|Thu, Dec 10|5|`;
+
+const fmt = n => n.toLocaleString("en-US");
+const pct1 = p => (Math.round(p * 1000) / 10).toFixed(1);
+
+// standings.txt format, one line per kid, fields split by "|":
+// name|done|total|laps to go|school days left|finish line|pit stops|note
+// plus a line: snapshot|<when the numbers were pulled>
+function parse(text){
+  const out = {snapshot:"", kids:{}};
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const f = line.split("|").map(x => x.trim());
+    if (f[0].toLowerCase() === "snapshot") { out.snapshot = f.slice(1).join("|"); continue; }
+    const [name, done, total, toGo, days, last, overdue, note] = f;
+    const n = [done, total, toGo, days, overdue].map(Number);
+    if (n.some(x => !Number.isFinite(x)) || !n[1]) continue;
+    out.kids[name] = {done:n[0], total:n[1], toGo:n[2], days:n[3], last:last || "", overdue:n[4], note:note || ""};
+  }
+  return out;
+}
+
+function car(k){
+  const c = k.c;
+  const wheel = x => `<g class="wheel"><circle cx="${x}" cy="36" r="9" fill="#141518" stroke="#000" stroke-width="1"/><circle cx="${x}" cy="36" r="3.8" fill="#b9bec7"/><rect x="${x-1}" y="28.5" width="2" height="5" rx="1" fill="#b9bec7"/></g>`;
+  return `<svg viewBox="0 0 122 46" aria-hidden="true" focusable="false">
+    <rect x="3" y="5" width="17" height="5" rx="1.5" fill="${c.wing}" stroke="${c.line}" stroke-width="1"/>
+    <rect x="10" y="9" width="4" height="15" fill="${c.wing}"/>
+    <path d="M8 36 L8 25 Q8 21.5 12 21.5 L48 21 L58 12 Q60 10 63 10 L76 10 Q79 10 81 12 L88 21 L104 24 Q116 26 117.5 33 L117.5 36 Z"
+          fill="${c.body}" stroke="${c.line}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M11 29.5 L114 29.5" stroke="${c.stripe}" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>
+    <circle cx="69" cy="14" r="5.6" fill="#f3f1ea"/>
+    <rect x="68.5" y="11.6" width="7.2" height="3.2" rx="1.2" fill="#1b1d21"/>
+    <circle cx="40" cy="28.5" r="7.6" fill="#ffffff" stroke="${c.line}" stroke-width="1.2"/>
+    <text x="40" y="32.4" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11.5" fill="#111">${k.num}</text>
+    <rect x="102" y="35" width="18" height="4" rx="1.5" fill="${c.wing}" stroke="${c.line}" stroke-width="1"/>
+    ${wheel(27)}${wheel(97)}
+  </svg>`;
+}
+
+function render(data){
+  const kids = KIDS.filter(k => data.kids[k.name]).map(k => ({...k, ...data.kids[k.name]}));
+  if (!kids.length) return false;
+  const ranked = kids.map(k => ({...k, p:k.done / k.total, left:k.toGo})).sort((a, b) => b.p - a.p);
+  const done = kids.reduce((s, k) => s + k.done, 0);
+  const total = kids.reduce((s, k) => s + k.total, 0);
+  const toGo = kids.reduce((s, k) => s + k.toGo, 0);
+  document.getElementById("summary").innerHTML =
+    `<span>Team: <b>${fmt(done)}</b> of <b>${fmt(total)}</b> activities done (<b>${pct1(done / total)}%</b>)</span>` +
+    `<span><b>${fmt(toGo)}</b> to go from today</span>` +
+    `<span>Checkered flag: <b>Thu, Dec 10</b></span>`;
+  if (data.snapshot) document.getElementById("snap").textContent = "Snapshot taken " + data.snapshot;
+
+  document.getElementById("lanes").innerHTML = ranked.map((k, i) => `
+    <div class="lane" style="--p:${k.p.toFixed(4)};--kid:${k.trail || k.c.body};--trail-o:${k.trailO || .6};--delay:${(i * .15).toFixed(2)}s">
+      <div class="driver"><span class="pos">P${i + 1}</span><span class="dname">${k.name}</span></div>
+      <div class="road" role="img" aria-label="${k.name}: ${pct1(k.p)} percent of activities done">
+        <div class="trail"></div>
+        <div class="tag">${pct1(k.p)}%</div>
+        <div class="car">${car(k)}</div>
+        <div class="finish"></div>
+      </div>
+    </div>`).join("");
+
+  document.getElementById("cards").innerHTML = ranked.map((k, i) => {
+    const perDay = k.days > 0 ? "~" + Math.ceil(k.left / k.days) : "—";
+    const chip = k.overdue === 0
+      ? `<span class="chip good">On pace</span>`
+      : `<span class="chip warn">Pit stop: ${k.overdue} to catch up</span>`;
+    const notes = [`Finish line ${k.last}`].concat(k.note ? [k.note] : []).join(" · ");
+    return `
+    <article class="card${k.dark ? " dark" : ""}" style="--kid:${k.c.body}">
+      <div class="card-head">
+        <div class="mini">${car(k)}</div>
+        <div class="who"><div class="pos">P${i + 1}</div><h2>${k.name}</h2><div class="sub">${k.grade} · Car #${k.num}</div></div>
+        <div class="pct">${pct1(k.p)}<small>%</small></div>
+      </div>
+      <div class="bar" aria-hidden="true"><span style="width:${(k.p * 100).toFixed(1)}%"></span></div>
+      <dl class="stats">
+        <div><dt>Done</dt><dd>${fmt(k.done)} <span>of ${fmt(k.total)}</span></dd></div>
+        <div><dt>Laps to go</dt><dd>${fmt(k.left)} <span>from today</span></dd></div>
+        <div><dt>School days left</dt><dd>${k.days}</dd></div>
+        <div><dt>Needed per day</dt><dd>${perDay}</dd></div>
+      </dl>
+      <div class="foot">${chip}<span>${notes}</span></div>
+    </article>`;
+  }).join("");
+  return true;
+}
+
+render(parse(FALLBACK));
+fetch("standings.txt?v=" + Date.now(), {cache:"no-store"})
+  .then(r => r.ok ? r.text() : Promise.reject(r.status))
+  .then(t => { const d = parse(t); if (Object.keys(d.kids).length) render(d); })
+  .catch(() => {});
+</script>
+</body>
+</html>
