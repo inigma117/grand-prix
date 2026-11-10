@@ -1,4 +1,4 @@
-snapshot|Tue, Nov 10, 2026, 5:17 PM CT
+snapshot|Tue, Nov 10, 2026, 5:18 PM CT
 Emmett|1564|1690|125|10|Thu, Dec 3|0|
 Maxwell|800|1023|196|18|Thu, Dec 10|2|His plan runs through Thanksgiving week
 Marcus|816|983|161|14|Thu, Dec 10|4|
