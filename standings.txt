@@ -1,6 +1,6 @@
-snapshot|Tue, Nov 10, 2026, 5:18 PM CT
-prevsnapshot|Tue, Nov 10, 2026, 3:55 PM CT
-Emmett|1564|1690|125|10|Thu, Dec 3|0||1553|1690
-Maxwell|800|1023|196|18|Thu, Dec 10|2|His plan runs through Thanksgiving week|799|1023
+snapshot|Tue, Nov 10, 2026, 5:28 PM CT
+prevsnapshot|Tue, Nov 10, 2026, 5:18 PM CT
+Emmett|1564|1690|125|10|Thu, Dec 3|0||1564|1690
+Maxwell|800|1023|196|14|Thu, Dec 10|2||800|1023
 Marcus|816|983|161|14|Thu, Dec 10|4||816|983
 Adaline|994|1231|230|14|Thu, Dec 10|5||994|1231
