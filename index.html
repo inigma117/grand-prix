@@ -109,6 +109,7 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
 .foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:15px;color:var(--muted)}
 .chip{font-family:var(--label);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;padding:4px 11px;border-radius:999px}
 .chip.good{background:rgba(94,224,138,.15);color:var(--good)}
+.newfin{display:inline-block;background:var(--flag);color:#111;font-family:var(--label);font-weight:800;letter-spacing:.03em;padding:2px 9px;border-radius:999px}
 .chip.warn{background:rgba(255,181,71,.15);color:var(--warn)}
 
 /* Velocity: activities completed per weekday */
@@ -240,6 +241,7 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
       <li><b>Needed per day</b> Laps to go divided by school days left after today.</li>
       <li><b>Velocity</b> Activities completed this week (starting Monday) divided by the weekdays so far, today included. Bars show each weekday's count and reset every Monday.</li>
       <li><b>Pit stop</b> Activities scheduled before today that haven't been started.</li>
+      <li><b>New Finish</b> The day a driver will finish if they keep to their daily target. Once they work far enough ahead to beat their scheduled finish line, the old finish line drops off their card.</li>
       <li><b>Checkered flag</b> The day the last car crosses the line if every driver keeps to their daily target (the same math as the nightly schedule shift). Each full day of work done ahead pulls a finish in a day; pit stops push it out. When the flag moves up it turns gold, with fireworks, for 3 hours.</li>
       <li><b>School days left</b> School days after today through the last scheduled day of the year.</li>
       <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
@@ -408,7 +410,8 @@ function render(data){
     const chip = k.overdue === 0
       ? `<span class="chip good">On pace</span>`
       : `<span class="chip warn">Pit stop: ${k.overdue} to catch up</span>`;
-    const notes = [`Finish line ${k.last}`].concat(k.proj ? [`Projected ${fmtDay(k.proj)}${aheadTxt(k.ahead)}`] : []).concat(k.note ? [k.note] : []).join(" · ");
+    const passed = k.proj && k.ahead > 0; // accelerated past the finish line: show only the New Finish
+    const notes = (passed ? [] : [`Finish line ${k.last}`]).concat(k.proj ? [`<b class="newfin">New Finish ${fmtDay(k.proj)}</b>${aheadTxt(k.ahead)}`] : []).concat(k.note ? [k.note] : []).join(" · ");
     const m = move(k, i);
     const v = vel(k);
     const velo = v == null ? "" : (() => {
