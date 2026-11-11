@@ -235,10 +235,11 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
       <li><b>Needed per day</b> Laps to go divided by school days left after today.</li>
       <li><b>Velocity</b> Activities completed this week (starting Monday) divided by the weekdays so far, today included. Bars show each weekday's count and reset every Monday.</li>
       <li><b>Pit stop</b> Activities scheduled before today that haven't been started.</li>
-      <li><b>Checkered flag</b> The day the last car crosses the line if every driver does one plan-day of work per school day. Each full plan-day a driver works ahead pulls their finish in a day; pit stops push it out. When the flag moves up it turns gold, with fireworks, for 3 hours.</li>
+      <li><b>Checkered flag</b> The day the last car crosses the line if every driver keeps to their daily target (the same math as the nightly schedule shift). Each full day of work done ahead pulls a finish in a day; pit stops push it out. When the flag moves up it turns gold, with fireworks, for 3 hours.</li>
+      <li><b>School days left</b> School days after today through the last scheduled day of the year.</li>
       <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
     </ul>
-    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 6:39 PM CT</span>. Standings update every hour on school days.</div>
+    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 6:46 PM CT</span>. Standings update every hour on school days.</div>
   </footer>
 </main>
 
@@ -250,13 +251,13 @@ const KIDS = [
   {name:"Marcus",  grade:"2nd grade", num:2, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
   {name:"Adaline", grade:"3rd grade", num:3, c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff"}}
 ];
-const FALLBACK = `snapshot|Tue, Nov 10, 2026, 6:39 PM CT
-prevsnapshot|Tue, Nov 10, 2026, 6:01 PM CT
+const FALLBACK = `snapshot|Tue, Nov 10, 2026, 6:46 PM CT
+prevsnapshot|Tue, Nov 10, 2026, 6:39 PM CT
 Emmett|1564|1690|125|10|Thu, Dec 3|0||1564|1690|11,20|2026-12-03|0
-Maxwell|800|1023|196|14|Thu, Dec 10|2||800|1023|9,5|2026-12-14|-1
+Maxwell|800|1023|196|14|Thu, Dec 10|2||800|1023|9,5|2026-12-10|0
 Marcus|816|983|167|14|Thu, Dec 10|0||816|983|10,25|2026-12-10|0
-Adaline|994|1231|232|14|Thu, Dec 10|3||994|1231|17,28|2026-12-14|-1
-flag|2026-12-14|2026-12-14|`;
+Adaline|994|1231|232|14|Thu, Dec 10|3||994|1231|17,28|2026-12-10|0
+flag|2026-12-10|2026-12-10|`;
 
 const fmt = n => n.toLocaleString("en-US");
 const pct1 = p => (Math.round(p * 1000) / 10).toFixed(1);
