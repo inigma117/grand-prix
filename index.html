@@ -238,8 +238,9 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
       <li><b>Checkered flag</b> The day the last car crosses the line if every driver keeps to their daily target (the same math as the nightly schedule shift). Each full day of work done ahead pulls a finish in a day; pit stops push it out. When the flag moves up it turns gold, with fireworks, for 3 hours.</li>
       <li><b>School days left</b> School days after today through the last scheduled day of the year.</li>
       <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
+      <li><b>Update times</b> Monday–Friday at 12:00 PM, 4:00 PM, and after the nightly schedule check (about 9:00 PM), Central time.</li>
     </ul>
-    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 6:46 PM CT</span>. Standings update every hour on school days.</div>
+    <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 6:46 PM CT</span>. Standings update Monday–Friday at 12:00 PM, 4:00 PM, and after the nightly schedule check (about 9:00 PM), Central time.</div>
   </footer>
 </main>
 
@@ -312,6 +313,21 @@ function car(k){
   </svg>`;
 }
 
+// Standings refresh Mon–Fri at noon, 4 PM, and after the nightly schedule check (about 9:00 PM), Central time
+function nextUpdate(){
+  const slots = [[12, 0, "12:00 PM"], [16, 0, "4:00 PM"], [21, 0, "about 9:00 PM"]];
+  const ct = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Chicago"}));
+  for (let add = 0; add < 8; add++) {
+    const d = new Date(ct); d.setDate(ct.getDate() + add);
+    const dw = d.getDay(); if (dw < 1 || dw > 5) continue;
+    for (const [h, m, label] of slots) {
+      const t = new Date(d); t.setHours(h, m, 0, 0);
+      if (t > ct) return (add === 0 ? "Today" : add === 1 ? "Tomorrow" : t.toLocaleDateString("en-US", {weekday: "long"})) + " " + label + " CT";
+    }
+  }
+  return "";
+}
+
 function render(data){
   const kids = KIDS.filter(k => data.kids[k.name]).map(k => ({...k, ...data.kids[k.name]}));
   if (!kids.length) return false;
@@ -340,7 +356,8 @@ function render(data){
     `<span>Team: <b>${fmt(done)}</b> of <b>${fmt(total)}</b> activities done (<b>${pct1(done / total)}%</b>)</span>` +
     `<span><b>${fmt(toGo)}</b> to go from today</span>` +
     (hasPrev ? `<span><b>+${fmt(done - kids.reduce((s, k) => s + k.prevDone, 0))}</b> since ${prevTime}</span>` : "") +
-    (hasVel ? `<span>Team velocity <b>${kids.reduce((s, k) => s + vel(k), 0).toFixed(1)}</b> a weekday this week</span>` : "");
+    (hasVel ? `<span>Team velocity <b>${kids.reduce((s, k) => s + vel(k), 0).toFixed(1)}</b> a weekday this week</span>` : "") +
+    (nextUpdate() ? `<span>Next update: <b>${nextUpdate()}</b></span>` : "");
   if (data.snapshot) document.getElementById("snap").textContent = "Snapshot taken " + data.snapshot;
 
   document.getElementById("lanes").innerHTML = ranked.map((k, i) => `
