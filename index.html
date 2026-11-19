@@ -238,7 +238,7 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
   <footer class="source">
     <ul class="legend">
       <li><b>Laps to go</b> Activities scheduled from today through each kid's last school day that aren't marked Completed, including anything left from today.</li>
-      <li><b>Needed per day</b> Laps to go divided by school days left after today.</li>
+      <li><b>Needed per day</b> Laps to go divided by school days left after today. "Target" is the driver's normal daily load; when they fall behind, the extra goes on the next school day as a catch-up day so every day after that stays at the target.</li>
       <li><b>Velocity</b> Activities completed this week (starting Monday) divided by the weekdays so far, today included. Bars show each weekday's count and reset every Monday.</li>
       <li><b>Pit stop</b> Activities scheduled before today that haven't been started.</li>
       <li><b>New Finish</b> The day a driver will finish if they keep to their daily target. Everyone shares the same finish line, the last school day of the year. Once a driver is on pace to beat it, the finish line drops off their card and the New Finish shows how many school days ahead they are.</li>
@@ -254,10 +254,10 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
 <script>
 // Car look for each driver. Standings numbers come from standings.txt (updated hourly); the values here are the fallback.
 const KIDS = [
-  {name:"Emmett",  grade:"7th grade", num:7, c:{body:"#2f7bff", wing:"#1a4fb8", line:"#0b2a66", stripe:"#ffffff"}},
-  {name:"Maxwell", grade:"5th grade", num:5, c:{body:"#23b14d", wing:"#15773a", line:"#0b3d1d", stripe:"#ffffff"}},
-  {name:"Marcus",  grade:"2nd grade", num:2, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
-  {name:"Adaline", grade:"3rd grade", num:3, ride:"pegasus", rideLabel:"Pegasus", c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff", mane:"#c9a7ff"}}
+  {name:"Emmett",  grade:"7th grade", num:7, target:13, c:{body:"#2f7bff", wing:"#1a4fb8", line:"#0b2a66", stripe:"#ffffff"}},
+  {name:"Maxwell", grade:"5th grade", num:5, target:14, c:{body:"#23b14d", wing:"#15773a", line:"#0b3d1d", stripe:"#ffffff"}},
+  {name:"Marcus",  grade:"2nd grade", num:2, target:12, c:{body:"#101114", wing:"#2b2d33", line:"#e9e6dc", stripe:"#ffffff"}, dark:true, trail:"#08090b", trailO:.75},
+  {name:"Adaline", grade:"3rd grade", num:3, target:17, ride:"pegasus", rideLabel:"Pegasus", c:{body:"#ff5fa8", wing:"#d63b86", line:"#7a1b4b", stripe:"#ffffff", mane:"#c9a7ff"}}
 ];
 const FALLBACK = `snapshot|Tue, Nov 10, 2026, 6:46 PM CT
 prevsnapshot|Tue, Nov 10, 2026, 6:39 PM CT
@@ -445,7 +445,7 @@ function render(data){
         <div><dt>Done</dt><dd>${fmt(k.done)} <span>of ${fmt(k.total)}</span></dd></div>
         <div><dt>Laps to go</dt><dd>${fmt(k.left)} <span>from today</span></dd></div>
         <div><dt>School days left</dt><dd>${k.days}</dd></div>
-        <div><dt>Needed per day</dt><dd>${perDay}</dd></div>
+        <div><dt>Needed per day</dt><dd>${perDay} <span>target ${k.target}</span></dd></div>
       </dl>
       ${velo}
       <div class="foot">${chip}<span>${notes}</span></div>
