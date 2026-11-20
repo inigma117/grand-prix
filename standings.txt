@@ -1,28 +1,28 @@
-snapshot|Fri, Nov 20, 2026, 3:40 PM CT
-prevsnapshot|Fri, Nov 20, 2026, 3:30 PM CT
-Emmett|1622|1690|68|6|Thu, Dec 10|0||1621|1690|7,0,18,0,11|2026-12-08|2
-Maxwell|916|1023|107|8|Thu, Dec 10|0||916|1023|15,1,12,0,31|2026-12-10|0
-Marcus|876|983|105|8|Thu, Dec 10|9||876|983|3,0,23,0,19|2026-12-10|0
-Adaline|1083|1319|232|8|Thu, Dec 10|96||1083|1319|35,3,13,0,16|2026-12-10|0
+snapshot|Fri, Nov 20, 2026, 5:58 PM CT
+prevsnapshot|Fri, Nov 20, 2026, 3:40 PM CT
+Emmett|1625|1690|65|5|Thu, Dec 10|0||1622|1690|7,0,18,0,14|2026-12-07|3
+Maxwell|923|1023|100|8|Thu, Dec 10|0||916|1023|15,1,12,0,38|2026-12-10|0
+Marcus|892|983|89|8|Thu, Dec 10|0||876|983|3,0,24,0,34|2026-12-10|0
+Adaline|1091|1319|224|8|Thu, Dec 10|88||1083|1319|35,3,13,0,24|2026-12-10|0
 flag|2026-12-10|2026-12-10|
 subj|Emmett|English 7|470|439|439
-subj|Emmett|Math 7|375|372|371
+subj|Emmett|Math 7|375|375|372
 subj|Emmett|Earth & Space Science|409|390|390
 subj|Emmett|World Culture & Geography|295|280|280
 subj|Emmett|Learning Strategies|141|141|141
 subj|Maxwell|Language Arts|260|230|230
 subj|Maxwell|LA Extensions|104|96|96
 subj|Maxwell|Math|270|230|230
-subj|Maxwell|Science|117|109|109
-subj|Maxwell|Social Studies|200|179|179
+subj|Maxwell|Science|117|115|109
+subj|Maxwell|Social Studies|200|180|179
 subj|Maxwell|Art Adventures (3-5)|72|72|72
 subj|Marcus|Language Arts|275|238|238
-subj|Marcus|Math|309|275|275
-subj|Marcus|Science|183|178|178
-subj|Marcus|Social Studies|130|110|110
-subj|Marcus|Art Foundations (K-2)|72|61|61
+subj|Marcus|Math|309|276|275
+subj|Marcus|Science|183|183|178
+subj|Marcus|Social Studies|130|113|110
+subj|Marcus|Art Foundations (K-2)|72|68|61
 subj|Adaline|Science|106|104|104
 subj|Adaline|Social Studies|140|131|131
 subj|Adaline|Math|339|302|302
-subj|Adaline|Language Arts: Reading Comprehension|249|167|167
+subj|Adaline|Language Arts: Reading Comprehension|249|175|167
 subj|Adaline|Language Arts: Writing|249|144|144
