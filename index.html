@@ -113,6 +113,15 @@ dd span{font-size:14px;font-weight:500;color:var(--muted)}
 .chip.warn{background:rgba(255,181,71,.15);color:var(--warn)}
 
 /* Velocity: activities completed per weekday */
+.subj{display:flex;flex-wrap:wrap;gap:6px}
+.subj span{font-family:var(--label);font-size:13px;letter-spacing:.03em;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.22);color:var(--muted);white-space:nowrap}
+.subj span b{color:var(--ink,#f3f1ea);font-weight:700}
+.subj span.won{background:var(--flag);color:#111;font-weight:800}
+.subj span.won.new{animation:trophyPulse 1.2s ease-in-out 6 alternate;box-shadow:0 0 0 3px rgba(255,210,63,.35)}
+.subj span.won.new::after{content:" NEW";font-size:11px;letter-spacing:.08em}
+@keyframes trophyPulse{to{transform:scale(1.08);box-shadow:0 0 14px 4px rgba(255,210,63,.6)}}
+.trophy-banner{margin:10px 0 0;padding:10px 16px;border-radius:12px;background:var(--flag);color:#111;font-family:var(--label);font-weight:800;font-size:17px;letter-spacing:.02em}
+@media (prefers-reduced-motion:reduce){.subj span.won.new{animation:none}}
 .velo{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px}
 .velo .vl{font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.2}
 .velo .vv{font-family:var(--label);font-weight:700;font-size:25px;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -201,6 +210,7 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
     <div class="eyebrow"><i aria-hidden="true"></i>Time4Learning · 2026 school year</div>
     <h1>Koen Homeschool Grand Prix</h1>
     <div class="summary" id="summary"></div>
+    <div class="trophy-banner" id="trophyBanner" hidden></div>
     <div class="hud">
       <div class="flagbar" id="flagbar" hidden>
         <i class="fi" aria-hidden="true"></i>
@@ -245,6 +255,7 @@ body.party .kerb{background:repeating-linear-gradient(90deg,var(--flag) 0 24px,#
       <li><b>Checkered flag</b> The day the last car crosses the line if every driver keeps to their daily target (the same math as the nightly schedule shift). Each full day of work done ahead pulls a finish in a day; pit stops push it out. When the flag moves up it turns gold, with fireworks, for 3 hours.</li>
       <li><b>School days left</b> School days after today through the last scheduled day of the year.</li>
       <li><b>▲ ▼ Since last refresh</b> How many places a driver moved up or down since the previous update, plus activities finished since then.</li>
+      <li><b>🏆 Subjects</b> Each driver's subjects for the year. A gold trophy means every activity in that subject is done; otherwise it shows how many are left. A subject finished since the last update gets a NEW tag, a banner and fireworks.</li>
       <li><b>Update times</b> Monday–Friday at 12:00 PM, 4:00 PM, and after the nightly schedule check (about 9:00 PM), Central time.</li>
     </ul>
     <div>From the Time4Learning Activity Planner · <span id="snap">Snapshot taken Tue, Nov 10, 2026, 6:46 PM CT</span>. Standings update Monday–Friday at 12:00 PM, 4:00 PM, and after the nightly schedule check (about 9:00 PM), Central time.</div>
@@ -281,7 +292,7 @@ const aheadTxt = a => a == null ? "" : a > 0 ? ` (${a} day${a === 1 ? "" : "s"} 
 // plus: snapshot|<when>   prevsnapshot|<previous refresh>
 //       flag|<checkered flag YYYY-MM-DD>|<where it was before it last moved up>|<when it moved up, ISO time>
 function parse(text){
-  const out = {snapshot:"", prevSnapshot:"", flag:null, kids:{}};
+  const out = {snapshot:"", prevSnapshot:"", flag:null, kids:{}, subjects:{}};
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
@@ -290,6 +301,9 @@ function parse(text){
     if (key === "snapshot") { out.snapshot = f.slice(1).join("|"); continue; }
     if (key === "prevsnapshot") { out.prevSnapshot = f.slice(1).join("|"); continue; }
     if (key === "flag") { out.flag = {date:isoDay(f[1]), from:isoDay(f[2]), movedAt:f[3] || ""}; continue; }
+    if (key === "subj") { const t = Number(f[3]), d = Number(f[4]), pv = Number(f[5]);
+      if (f[1] && f[2] && t > 0 && Number.isFinite(d)) (out.subjects[f[1]] = out.subjects[f[1]] || []).push({name:f[2], total:t, done:d, prev:Number.isFinite(pv) ? pv : d});
+      continue; }
     const [name, done, total, toGo, days, last, overdue, note, prevDone, prevTotal, hist, proj, ahead] = f;
     const n = [done, total, toGo, days, overdue].map(Number);
     if (n.some(x => !Number.isFinite(x)) || !n[1]) continue;
@@ -362,6 +376,25 @@ function nextUpdate(){
   return "";
 }
 
+const shortSubj = n => n.replace(/^Language Arts: /, "").replace(/^Art (Adventures|Foundations) \((K-2|3-5)\)$/, "Art").replace(/ & /g, " & ");
+function trophies(list){
+  if (!list || !list.length) return "";
+  const rows = list.map(x => ({...x, left: Math.max(0, x.total - x.done), won: x.done >= x.total, fresh: x.done >= x.total && x.prev < x.total}))
+    .sort((a, b) => (b.won - a.won) || (a.left - b.left));
+  return `<div class="subj" aria-label="Subjects">` + rows.map(x => x.won
+    ? `<span class="won${x.fresh ? " new" : ""}" title="${shortSubj(x.name)}: all ${x.total} activities done">🏆 ${shortSubj(x.name)}</span>`
+    : `<span title="${shortSubj(x.name)}: ${x.done} of ${x.total} done">${shortSubj(x.name)} · <b>${x.left}</b> left</span>`).join("") + `</div>`;
+}
+let trophyCheered = false;
+function renderTrophyBanner(data){
+  const el = document.getElementById("trophyBanner"); if (!el) return;
+  const wins = [];
+  for (const [kid, list] of Object.entries(data.subjects || {})) for (const x of list) if (x.done >= x.total && x.prev < x.total) wins.push(`${kid} finished ${shortSubj(x.name)}`);
+  if (!wins.length) { el.hidden = true; return; }
+  el.textContent = "🏆 " + wins.join(" · ") + " for the year!";
+  el.hidden = false;
+  if (!trophyCheered && typeof fireworks !== "undefined") { trophyCheered = true; setTimeout(() => fireworks.play(5000), 600); }
+}
 function render(data){
   const kids = KIDS.filter(k => data.kids[k.name]).map(k => ({...k, ...data.kids[k.name]}));
   if (!kids.length) return false;
@@ -448,12 +481,14 @@ function render(data){
         <div><dt>Needed per day</dt><dd>${perDay} <span>target ${k.target}</span></dd></div>
       </dl>
       ${velo}
+      ${trophies(data.subjects && data.subjects[k.name])}
       <div class="foot">${chip}<span>${notes}</span></div>
       ${since}
     </article>`;
   }).join("");
   renderFlag(data, kids);
   renderCountdown(kids);
+  renderTrophyBanner(data);
   return true;
 }
 
